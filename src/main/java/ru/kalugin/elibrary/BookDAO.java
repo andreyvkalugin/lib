@@ -14,6 +14,7 @@ public class BookDAO {
 	private String jdbcUsername;
 	private String jdbcPassword;
 	private Connection jdbcConnection;
+	private static boolean firstRequest = true;
 	
 	public BookDAO(String jdbcURL, String jdbcUsername, String jdbcPassword) {
 		this.jdbcURL = jdbcURL;
@@ -30,6 +31,11 @@ public class BookDAO {
 			}
 			jdbcConnection = DriverManager.getConnection(
 										jdbcURL, jdbcUsername, jdbcPassword);
+			if (firstRequest){
+				Statement statement = jdbcConnection.createStatement();
+				statement.execute("CREATE TABLE IF NOT EXISTS book (book_id INT(11) AUTO_INCREMENT PRIMARY KEY, title VARCHAR(100) not NULL, author VARCHAR(100) not NULL, price FLOAT not NULL);");
+				statement.close();
+			}
 		}
 	}
 	
