@@ -2,34 +2,24 @@
  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
+
 <web-app>
-  <context-param>
-    <param-name>jdbcURL</param-name>
-    <param-value>jdbc:h2:~/elibrary</param-value>
-  </context-param>
-
-  <context-param>
-    <param-name>jdbcUsername</param-name>
-    <param-value>sa</param-value>
-  </context-param>
-
-  <context-param>
-    <param-name>jdbcPassword</param-name>
-    <param-value></param-value>
-  </context-param>
-
+  <display-name>Archetype Created Web Application</display-name>
   <servlet>
-    <servlet-name>ControllerServlet</servlet-name>
-    <servlet-class>ru.kalugin.elibrary.ControllerServlet</servlet-class>
+    <servlet-name>NewRecordInLibraryServlet</servlet-name>
+    <servlet-class>ru.kalugin.elibrary.NewRecordInLibraryServlet</servlet-class>
   </servlet>
-
   <servlet-mapping>
-    <servlet-name>ControllerServlet</servlet-name>
-    <url-pattern>/</url-pattern>
+    <servlet-name>NewRecordInLibraryServlet</servlet-name>
+    <url-pattern>/NewRecordInLibraryServlet</url-pattern>
   </servlet-mapping>
-
-  <error-page>
-    <exception-type>java.lang.Exception</exception-type>
-    <location>/Error.jsp</location>
-  </error-page>
+  <servlet>
+    <servlet-name>LibraryBooks</servlet-name>
+    <jsp-file>/LibraryBooks.jsp</jsp-file>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LibraryBooks</servlet-name>
+    <url-pattern>/LibraryBooks</url-pattern>
+  </servlet-mapping>
 </web-app>
+
