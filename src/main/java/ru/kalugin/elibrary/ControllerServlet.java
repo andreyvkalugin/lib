@@ -62,6 +62,7 @@ public class ControllerServlet extends HttpServlet {
 			throws SQLException, IOException, ServletException {
 		List<Book> listBook = bookDAO.listAllBooks();
 		request.setAttribute("listBook", listBook);
+		System.out.println(listBook);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("BookList.jsp");
 		dispatcher.forward(request, response);
 	}
@@ -89,6 +90,7 @@ public class ControllerServlet extends HttpServlet {
 		float price = Float.parseFloat(request.getParameter("price"));
 
 		Book newBook = new Book(title, author, price);
+		System.out.println(newBook);
 		bookDAO.insertBook(newBook);
 		response.sendRedirect("list");
 	}
