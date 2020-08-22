@@ -50,34 +50,31 @@ public class DTO {
 		}
 	}
 	
-	public boolean insertBook(Book book) throws SQLException {
-		//String setAuthor = "INSERT INTO author_table (author) SELECT * FROM (SELECT '"+book.getAuthor()+"') AS tmp WHERE NOT EXISTS (SELECT author FROM author_table WHERE author = '"+book.getAuthor()+"') LIMIT 1;";
-		String setAuthor = "INSERT INTO author_table (author) SELECT * FROM (SELECT CAST (? as CHAR(11))) AS tmp WHERE NOT EXISTS (SELECT author FROM author_table WHERE author = CAST (? as CHAR(11))) LIMIT 1;";
+	public void insertBook(Book book) throws SQLException {
+		connect();
+		getInsertionInAuthorTable(book);
+		getInsertionInBookTable(book, getAuthorId(book.getAuthor()));
+		disconnect();
+	}
+
+	private void getInsertionInBookTable(Book book, int authorId) throws SQLException {
 		String setBook = "INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)";
 
-		connect();
-		
+		PreparedStatement statement = jdbcConnection.prepareStatement(setBook);
+		statement.setString(1, book.getTitle());
+		statement.setFloat(2, book.getPrice());
+		statement.setInt(3, authorId);
+		statement.executeUpdate();
+		statement.close();
+	}
+
+	private void getInsertionInAuthorTable(Book book) throws SQLException {
+		String setAuthor = "INSERT INTO author_table (author) SELECT * FROM (SELECT CAST (? as CHAR(11))) AS tmp WHERE NOT EXISTS (SELECT author FROM author_table WHERE author = CAST (? as CHAR(11))) LIMIT 1;";
 		PreparedStatement statement = jdbcConnection.prepareStatement(setAuthor);
 		statement.setString(1, book.getAuthor());
 		statement.setString(2, book.getAuthor());
 		statement.executeUpdate();
 		statement.close();
-
-		/*Statement statement = jdbcConnection.createStatement();
-		statement.execute(setAuthor);
-		statement.close();*/
-
-		int authorId = getAuthorId(book.getAuthor());
-
-		PreparedStatement statement2 = jdbcConnection.prepareStatement(setBook);
-		statement2.setString(1, book.getTitle());
-		statement2.setFloat(2, book.getPrice());
-		statement2.setInt(3, authorId);
-		
-		boolean rowInserted = statement2.executeUpdate() > 0;
-		statement2.close();
-		disconnect();
-		return rowInserted;
 	}
 
 	public List<Book> listAllBooks() throws SQLException {
