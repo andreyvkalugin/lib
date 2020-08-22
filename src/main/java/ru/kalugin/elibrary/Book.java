@@ -1,4 +1,6 @@
 package ru.kalugin.elibrary;
+
+
 public class Book {
 	protected int id;
 	protected String title;

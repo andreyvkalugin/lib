@@ -1,5 +1,7 @@
 package ru.kalugin.elibrary;
 
+import ru.kalugin.elibrary.interfaces.CommonEntity;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -57,26 +59,6 @@ public class DTO {
 		disconnect();
 	}
 
-	private void getInsertionInBookTable(Book book, int authorId) throws SQLException {
-		String setBook = "INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)";
-
-		PreparedStatement statement = jdbcConnection.prepareStatement(setBook);
-		statement.setString(1, book.getTitle());
-		statement.setFloat(2, book.getPrice());
-		statement.setInt(3, authorId);
-		statement.executeUpdate();
-		statement.close();
-	}
-
-	private void getInsertionInAuthorTable(Book book) throws SQLException {
-		String setAuthor = "INSERT INTO author_table (author) SELECT * FROM (SELECT CAST (? as CHAR(11))) AS tmp WHERE NOT EXISTS (SELECT author FROM author_table WHERE author = CAST (? as CHAR(11))) LIMIT 1;";
-		PreparedStatement statement = jdbcConnection.prepareStatement(setAuthor);
-		statement.setString(1, book.getAuthor());
-		statement.setString(2, book.getAuthor());
-		statement.executeUpdate();
-		statement.close();
-	}
-
 	public List<Book> listAllBooks() throws SQLException {
 		List<Book> listBook = new ArrayList<>();
 		
@@ -105,20 +87,34 @@ public class DTO {
 		return listBook;
 	}
 	
-	public boolean deleteBook(Book book) throws SQLException {
-		String sql = "DELETE FROM book where book_id = ?";
+	public void deleteBook(Book book) throws SQLException {
+		String sqlForBookTable = "DELETE FROM book where book_id = ?";
+		String sqlForAuthorTable = "DELETE FROM author_table where id = ?";
 		
 		connect();
-		
-		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
-		statement.setInt(1, book.getId());
-		
-		boolean rowDeleted = statement.executeUpdate() > 0;
-		statement.close();
+		if (getAuthorForDeletedBook(book)>-1) {
+			deleteRowInTable(book.getId(), sqlForBookTable);
+			deleteRowInTable(getAuthorForDeletedBook(book),sqlForAuthorTable);
+		} else{
+			deleteRowInTable(book.getId(),sqlForBookTable);
+		}
 		disconnect();
-		return rowDeleted;		
 	}
-	
+
+	private int getAuthorForDeletedBook(Book book) {
+		int id = -1;
+		String sql = "SELECT * FROM book where author_id = ?";
+
+		return id;
+	}
+
+	private void deleteRowInTable(int id, String sql) throws SQLException {
+		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+		statement.setInt(1, id);
+		statement.executeUpdate();
+		statement.close();
+	}
+
 	public boolean updateBook(Book book) throws SQLException {
 		String sql = "UPDATE book SET title = ?, price = ?, author_id = ?";
 		sql += " WHERE book_id = ?";
@@ -134,21 +130,6 @@ public class DTO {
 		statement.close();
 		disconnect();
 		return rowUpdated;		
-	}
-
-	private int getAuthorId(String author) throws SQLException {
-		String getAuthorSql = "(SELECT * FROM author_table WHERE author = ?) LIMIT 1";
-
-		PreparedStatement statement = jdbcConnection.prepareStatement(getAuthorSql);
-		statement.setString(1, author);
-		System.out.println(author);
-		ResultSet resultSet = statement.executeQuery();
-		resultSet.next();
-		int authorId = resultSet.getInt("id");
-		System.out.println(authorId);
-		statement.close();
-
-		return authorId;
 	}
 
 	public Book getBook(int id) throws SQLException {
@@ -200,5 +181,40 @@ public class DTO {
 		return listAuthor;
 
 
+	}
+
+	private int getAuthorId(String author) throws SQLException {
+		String getAuthorSql = "(SELECT * FROM author_table WHERE author = ?) LIMIT 1";
+
+		PreparedStatement statement = jdbcConnection.prepareStatement(getAuthorSql);
+		statement.setString(1, author);
+		System.out.println(author);
+		ResultSet resultSet = statement.executeQuery();
+		resultSet.next();
+		int authorId = resultSet.getInt("id");
+		System.out.println(authorId);
+		statement.close();
+
+		return authorId;
+	}
+
+	private void getInsertionInBookTable(Book book, int authorId) throws SQLException {
+		String setBook = "INSERT INTO book (title, price, author_id) VALUES (?, ?, ?)";
+
+		PreparedStatement statement = jdbcConnection.prepareStatement(setBook);
+		statement.setString(1, book.getTitle());
+		statement.setFloat(2, book.getPrice());
+		statement.setInt(3, authorId);
+		statement.executeUpdate();
+		statement.close();
+	}
+
+	private void getInsertionInAuthorTable(Book book) throws SQLException {
+		String setAuthor = "INSERT INTO author_table (author) SELECT * FROM (SELECT CAST (? as CHAR(11))) AS tmp WHERE NOT EXISTS (SELECT author FROM author_table WHERE author = CAST (? as CHAR(11))) LIMIT 1;";
+		PreparedStatement statement = jdbcConnection.prepareStatement(setAuthor);
+		statement.setString(1, book.getAuthor());
+		statement.setString(2, book.getAuthor());
+		statement.executeUpdate();
+		statement.close();
 	}
 }
