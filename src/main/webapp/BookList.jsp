@@ -12,6 +12,8 @@
         	<a href="new">Add New Book</a>
         	&nbsp;&nbsp;&nbsp;
         	<a href="list">List All Books</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="author">List All Authors</a>
         	
         </h2>
 	</center>

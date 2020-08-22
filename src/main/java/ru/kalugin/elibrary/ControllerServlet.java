@@ -12,14 +12,14 @@ import javax.servlet.http.HttpServletResponse;
 
 public class ControllerServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private BookDAO bookDAO;
+	private DTO bookDTO;
 
 	public void init() {
 		String jdbcURL = getServletContext().getInitParameter("jdbcURL");
 		String jdbcUsername = getServletContext().getInitParameter("jdbcUsername");
 		String jdbcPassword = getServletContext().getInitParameter("jdbcPassword");
 
-		bookDAO = new BookDAO(jdbcURL, jdbcUsername, jdbcPassword);
+		bookDTO = new DTO(jdbcURL, jdbcUsername, jdbcPassword);
 
 	}
 
@@ -49,6 +49,9 @@ public class ControllerServlet extends HttpServlet {
 			case "/update":
 				updateBook(request, response);
 				break;
+			case "/author":
+				authorBook(request, response);
+				break;
 			default:
 				listBook(request, response);
 				break;
@@ -60,10 +63,19 @@ public class ControllerServlet extends HttpServlet {
 
 	private void listBook(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, IOException, ServletException {
-		List<Book> listBook = bookDAO.listAllBooks();
+		List<Book> listBook = bookDTO.listAllBooks();
 		request.setAttribute("listBook", listBook);
 		System.out.println(listBook);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("BookList.jsp");
+		dispatcher.forward(request, response);
+	}
+
+	private void authorBook(HttpServletRequest request, HttpServletResponse response)
+			throws SQLException, IOException, ServletException {
+		List<Author> listAuthor = bookDTO.listAllAuthor();
+		request.setAttribute("listAuthor", listAuthor);
+		System.out.println(listAuthor);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("AuthorList.jsp");
 		dispatcher.forward(request, response);
 	}
 
@@ -76,7 +88,7 @@ public class ControllerServlet extends HttpServlet {
 	private void showEditForm(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, ServletException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-		Book existingBook = bookDAO.getBook(id);
+		Book existingBook = bookDTO.getBook(id);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("BookForm.jsp");
 		request.setAttribute("book", existingBook);
 		dispatcher.forward(request, response);
@@ -90,8 +102,7 @@ public class ControllerServlet extends HttpServlet {
 		float price = Float.parseFloat(request.getParameter("price"));
 
 		Book newBook = new Book(title, author, price);
-		System.out.println(newBook);
-		bookDAO.insertBook(newBook);
+		bookDTO.insertBook(newBook);
 		response.sendRedirect("list");
 	}
 
@@ -103,7 +114,7 @@ public class ControllerServlet extends HttpServlet {
 		float price = Float.parseFloat(request.getParameter("price"));
 
 		Book book = new Book(id, title, author, price);
-		bookDAO.updateBook(book);
+		bookDTO.updateBook(book);
 		response.sendRedirect("list");
 	}
 
@@ -112,7 +123,7 @@ public class ControllerServlet extends HttpServlet {
 		int id = Integer.parseInt(request.getParameter("id"));
 
 		Book book = new Book(id);
-		bookDAO.deleteBook(book);
+		bookDTO.deleteBook(book);
 		response.sendRedirect("list");
 
 	}
