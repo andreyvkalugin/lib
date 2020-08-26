@@ -10,8 +10,9 @@ public class Book {
 	public Book() {
 	}
 
-	public Book(int id) {
+	public Book(int id, String author) {
 		this.id = id;
+		this.author = author;
 	}
 
 	public Book(int id, String title, String author, float price) {

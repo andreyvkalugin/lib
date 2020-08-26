@@ -121,8 +121,8 @@ public class ControllerServlet extends HttpServlet {
 	private void deleteBook(HttpServletRequest request, HttpServletResponse response) 
 			throws SQLException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
-
-		Book book = new Book(id);
+		String author = request.getParameter("author");
+		Book book = new Book(id,author);
 		bookDTO.deleteBook(book);
 		response.sendRedirect("list");
 

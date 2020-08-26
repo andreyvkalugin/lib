@@ -36,7 +36,7 @@
                     <td>
                     	<a href="edit?id=<c:out value='${book.id}' />">Edit</a>
                     	&nbsp;&nbsp;&nbsp;&nbsp;
-                    	<a href="delete?id=<c:out value='${book.id}' />">Delete</a>                    	
+                    	<a href="delete?id=<c:out value='${book.id}' />&author="<c:out value='${book.author}' />>Delete</a>
                     </td>
                 </tr>
             </c:forEach>

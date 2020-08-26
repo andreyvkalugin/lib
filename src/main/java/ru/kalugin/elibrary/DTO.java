@@ -1,7 +1,5 @@
 package ru.kalugin.elibrary;
 
-import ru.kalugin.elibrary.interfaces.CommonEntity;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -88,29 +86,41 @@ public class DTO {
 	}
 	
 	public void deleteBook(Book book) throws SQLException {
-		String sqlForBookTable = "DELETE FROM book where book_id = ?";
-		String sqlForAuthorTable = "DELETE FROM author_table where id = ?";
+		String sqlForBookTable = "DELETE FROM book WHERE book_id = ?";
+		String sqlForAuthorTable = "DELETE FROM author_table WHERE author = ?";
 		
 		connect();
-		if (getAuthorForDeletedBook(book)>-1) {
+		if (getAuthorForDeletedBook(book)<2) {
 			deleteRowInTable(book.getId(), sqlForBookTable);
-			deleteRowInTable(getAuthorForDeletedBook(book),sqlForAuthorTable);
+			deleteRowInTable(book.getAuthor(),sqlForAuthorTable);
 		} else{
 			deleteRowInTable(book.getId(),sqlForBookTable);
 		}
 		disconnect();
 	}
 
-	private int getAuthorForDeletedBook(Book book) {
+	private int getAuthorForDeletedBook(Book book) throws SQLException {
 		int id = -1;
-		String sql = "SELECT * FROM book where author_id = ?";
-
+		String sql = "SELECT COUNT(book_id) FROM book WHERE author_id IN (SELECT id FROM author_table WHERE author = ?)";
+		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+		statement.setString(1, book.getAuthor());
+		ResultSet resultSet = statement.executeQuery();
+		resultSet.next();
+		id = resultSet.getInt(1);
+		statement.close();
 		return id;
 	}
 
 	private void deleteRowInTable(int id, String sql) throws SQLException {
 		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
 		statement.setInt(1, id);
+		statement.executeUpdate();
+		statement.close();
+	}
+
+	private void deleteRowInTable(String id, String sql) throws SQLException {
+		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+		statement.setString(1, id);
 		statement.executeUpdate();
 		statement.close();
 	}
