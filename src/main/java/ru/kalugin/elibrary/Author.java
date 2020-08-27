@@ -29,4 +29,12 @@ public class Author {
     public void setAuthor(String author) {
         this.author = author;
     }
+
+    @Override
+    public String toString() {
+        return "Author{" +
+                "id=" + id +
+                ", author='" + author + '\'' +
+                '}';
+    }
 }

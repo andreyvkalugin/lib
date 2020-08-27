@@ -14,6 +14,8 @@
         	<a href="list">List All Books</a>
             &nbsp;&nbsp;&nbsp;
             <a href="author">List All Authors</a>
+            &nbsp;&nbsp;&nbsp;
+            <a href="FindForm.jsp">Find Books</a>
         	
         </h2>
 	</center>
@@ -24,7 +26,7 @@
                 <th>ID</th>
                 <th>Title</th>
                 <th>Author</th>
-                <th>Price</th>
+                <th>Quantity</th>
                 <th>Actions</th>
             </tr>
             <c:forEach var="book" items="${listBook}">
@@ -32,11 +34,11 @@
                     <td><c:out value="${book.id}" /></td>
                     <td><c:out value="${book.title}" /></td>
                     <td><c:out value="${book.author}" /></td>
-                    <td><c:out value="${book.price}" /></td>
+                    <td><c:out value="${book.quantity}" /></td>
                     <td>
                     	<a href="edit?id=<c:out value='${book.id}' />">Edit</a>
                     	&nbsp;&nbsp;&nbsp;&nbsp;
-                    	<a href="delete?id=<c:out value='${book.id}' />&author="<c:out value='${book.author}' />>Delete</a>
+                    	<a href="delete?id=<c:out value='${book.id}' />&author=<c:out value='${book.author}' />">Delete</a>
                     </td>
                 </tr>
             </c:forEach>

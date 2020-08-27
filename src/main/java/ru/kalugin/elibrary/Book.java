@@ -1,11 +1,10 @@
 package ru.kalugin.elibrary;
 
-
 public class Book {
 	protected int id;
 	protected String title;
 	protected String author;
-	protected float price;
+	protected int quantity;
 
 	public Book() {
 	}
@@ -15,15 +14,15 @@ public class Book {
 		this.author = author;
 	}
 
-	public Book(int id, String title, String author, float price) {
-		this(title, author, price);
+	public Book(int id, String title, String author, int quantity) {
+		this(title, author, quantity);
 		this.id = id;
 	}
 
-	public Book(String title, String author, float price) {
+	public Book(String title, String author, int quantity) {
 		this.title = title;
 		this.author = author;
-		this.price = price;
+		this.quantity = quantity;
 	}
 
 	public int getId() {
@@ -50,12 +49,12 @@ public class Book {
 		this.author = author;
 	}
 
-	public float getPrice() {
-		return this.price;
+	public int getQuantity() {
+		return this.quantity;
 	}
 
-	public void setPrice(float price) {
-		this.price = price;
+	public void setQuantity(int quantity) {
+		this.quantity = quantity;
 	}
 
 	@Override
@@ -64,7 +63,7 @@ public class Book {
 				"id=" + id +
 				", title='" + title + '\'' +
 				", author='" + author + '\'' +
-				", price=" + price +
+				", quantity=" + quantity +
 				'}';
 	}
 }
