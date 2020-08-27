@@ -85,9 +85,8 @@ public class DTO {
 
 	public List<Book> findBooks(String query) throws SQLException {
 		List<Book> listBook = new ArrayList<>();
-        String finalQuery = "'%"+query+"%'";
-		String sql = "SELECT * FROM (SELECT b.book_id, b.title, a.author, b.quantity FROM book AS b INNER JOIN author_table AS a ON b.author_id = a.id) as tmp WHERE title LIKE ? OR author LIKE ?";
-
+        String finalQuery = "%"+ query +"%";
+		String sql = "SELECT * FROM (SELECT b.book_id, b.title, a.author, b.quantity FROM book AS b INNER JOIN author_table AS a ON b.author_id = a.id) as tmp WHERE title LIKE CAST (? as CHAR(11)) OR author LIKE CAST (? as CHAR(11))";
 		connect();
 
 		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
@@ -102,6 +101,7 @@ public class DTO {
 			int quantity = resultSet.getInt(4);
 
 			Book book = new Book(id, title, author, quantity);
+			System.out.println(book);
 			listBook.add(book);
 		}
 
