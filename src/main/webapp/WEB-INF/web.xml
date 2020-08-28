@@ -6,7 +6,7 @@
         http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
   <context-param>
     <param-name>jdbcURL</param-name>
-    <param-value>jdbc:h2:~/test9</param-value>
+    <param-value>jdbc:h2:~/elib</param-value>
   </context-param>
 
   <context-param>

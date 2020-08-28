@@ -114,7 +114,6 @@ public class ControllerServlet extends HttpServlet {
 		String title = request.getParameter("title");
 		String author = request.getParameter("author");
 		int quantity = Integer.parseInt(request.getParameter("quantity"));
-
 		Book newBook = new Book(title, author, quantity);
 		bookDTO.insertBook(newBook);
 		response.sendRedirect("list");
@@ -126,7 +125,6 @@ public class ControllerServlet extends HttpServlet {
 		String title = request.getParameter("title");
 		String author = request.getParameter("author");
 		int quantity = Integer.parseInt(request.getParameter("quantity"));
-
 		Book book = new Book(id, title, author, quantity);
 		bookDTO.updateBook(book);
 		response.sendRedirect("list");

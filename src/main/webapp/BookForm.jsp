@@ -53,7 +53,7 @@
                 </td>
             </tr>
             <tr>
-                <th>Price: </th>
+                <th>Quantity: </th>
                 <td>
                 	<input type="text" name="quantity" size="5"
                 			value="<c:out value='${book.quantity}' />"

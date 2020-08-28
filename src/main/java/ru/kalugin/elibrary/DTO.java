@@ -22,68 +22,30 @@ public class DTO {
 		this.jdbcPassword = jdbcPassword;
 	}
 	
-	protected void connect() throws SQLException {
-		if (jdbcConnection == null || jdbcConnection.isClosed()) {
-			try {
-				Class.forName("org.h2.Driver");
-			} catch (ClassNotFoundException e) {
-				throw new SQLException(e);
-			}
-			jdbcConnection = DriverManager.getConnection(
-										jdbcURL, jdbcUsername, jdbcPassword);
-			if (firstRequest){
-				firstRequest = false;
-				Statement statement = jdbcConnection.createStatement();
-				statement.addBatch("CREATE TABLE IF NOT EXISTS author_table (id INT(11) AUTO_INCREMENT PRIMARY KEY, author VARCHAR(100) not NULL);");
-				statement.addBatch("CREATE TABLE IF NOT EXISTS book (book_id INT(11) AUTO_INCREMENT PRIMARY KEY, title VARCHAR(100) not NULL, quantity INT(11) not NULL, author_id int(11), FOREIGN KEY (author_id) REFERENCES author_table (id));");
-				statement.executeBatch();
-				statement.close();
-			}
-		}
-	}
-	
-	protected void disconnect() throws SQLException {
-		if (jdbcConnection != null && !jdbcConnection.isClosed()) {
-			jdbcConnection.close();
-		}
-	}
-	
-	public void insertBook(Book book) throws SQLException {
+	public synchronized void insertBook(Book book) throws SQLException {
 		connect();
 		getInsertionInAuthorTable(book);
 		getInsertionInBookTable(book, getAuthorId(book.getAuthor()));
 		disconnect();
 	}
 
-	public List<Book> listAllBooks() throws SQLException {
+	public synchronized List<Book> listAllBooks() throws SQLException {
 		List<Book> listBook = new ArrayList<>();
-		
 		String sql = "SELECT b.book_id, b.title, a.author, b.quantity FROM book AS b INNER JOIN author_table AS a ON b.author_id = a.id";
 		
 		connect();
-		
 		Statement statement = jdbcConnection.createStatement();
 		ResultSet resultSet = statement.executeQuery(sql);
-		
-		while (resultSet.next()) {
-			int id = resultSet.getInt(1);
-			String title = resultSet.getString(2);
-			String author = resultSet.getString(3);
-			int quantity = resultSet.getInt(4);
-			
-			Book book = new Book(id, title, author, quantity);
-			listBook.add(book);
-		}
+
+		listBook = getListFromResultSet(resultSet);
 		
 		resultSet.close();
 		statement.close();
-		
 		disconnect();
-		
 		return listBook;
 	}
 
-	public List<Book> findBooks(String query) throws SQLException {
+	public synchronized List<Book> findBooks(String query) throws SQLException {
 		List<Book> listBook = new ArrayList<>();
         String finalQuery = "%"+ query +"%";
 		String sql = "SELECT * FROM (SELECT b.book_id, b.title, a.author, b.quantity FROM book AS b INNER JOIN author_table AS a ON b.author_id = a.id) as tmp WHERE title LIKE CAST (? as CHAR(11)) OR author LIKE CAST (? as CHAR(11))";
@@ -94,59 +56,49 @@ public class DTO {
 		statement.setString(2, finalQuery);
 		ResultSet resultSet = statement.executeQuery();
 
-		while (resultSet.next()) {
-			int id = resultSet.getInt(1);
-			String title = resultSet.getString(2);
-			String author = resultSet.getString(3);
-			int quantity = resultSet.getInt(4);
-
-			Book book = new Book(id, title, author, quantity);
-			System.out.println(book);
-			listBook.add(book);
-		}
+		listBook = getListFromResultSet(resultSet);
 
 		resultSet.close();
 		statement.close();
-
 		disconnect();
-
 		return listBook;
 	}
-	
-	public void deleteBook(Book book) throws SQLException {
+
+	public synchronized void deleteBook(Book book) throws SQLException {
 		String sqlForBookTable = "DELETE FROM book WHERE book_id = ?";
 		String sqlForAuthorTable = "DELETE FROM author_table WHERE author = ?";
 		
 		connect();
-		if (getAuthorForDeletedBook(book) < 2) {
+		if (getAuthorAmountForDeletedBook(book) < 2) {
 			deleteRowInTable(book.getId(), sqlForBookTable);
 			deleteRowInTable(book.getAuthor(),sqlForAuthorTable);
-		} else{
+		} else {
 			deleteRowInTable(book.getId(),sqlForBookTable);
 		}
 		disconnect();
 	}
 
-	public boolean updateBook(Book book) throws SQLException {
+	public synchronized void updateBook(Book book) throws SQLException {
 		String sql = "UPDATE book SET title = ?, quantity = ?, author_id = ?";
 		sql += " WHERE book_id = ?";
 		connect();
-		int authorId = getAuthorId(book.getAuthor());
+		getInsertionInAuthorTable(book);
+
 		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
 		statement.setString(1, book.getTitle());
 		statement.setInt(2,  book.getQuantity());
-		statement.setInt(3, authorId);
+		statement.setInt(3, getAuthorId(book.getAuthor()));
 		statement.setInt(4, book.getId());
-		
-		boolean rowUpdated = statement.executeUpdate() > 0;
+		statement.executeUpdate();
 		statement.close();
+
+		deleteNotExistingAuthors();
 		disconnect();
-		return rowUpdated;		
 	}
 
-	public Book getBook(int id) throws SQLException {
+	public synchronized Book getBook(int id) throws SQLException {
 		Book book = null;
-		String sql = "SELECT * FROM book WHERE book_id = ?";
+		String sql = "SELECT * FROM (SELECT b.book_id, b.title, a.author, b.quantity FROM book AS b INNER JOIN author_table AS a ON b.author_id = a.id) as tmp WHERE book_id = ?";
 		
 		connect();
 		
@@ -169,7 +121,7 @@ public class DTO {
 		return book;
 	}
 
-	public List<Author> listAllAuthor() throws SQLException {
+	public synchronized List<Author> listAllAuthor() throws SQLException {
 		String getAuthorsSql = "SELECT * FROM author_table";
 		List<Author> listAuthor = new ArrayList<>();
 		connect();
@@ -191,20 +143,65 @@ public class DTO {
 		disconnect();
 
 		return listAuthor;
+	}
 
+	private void connect() throws SQLException {
+		if (jdbcConnection == null || jdbcConnection.isClosed()) {
+			try {
+				Class.forName("org.h2.Driver");
+			} catch (ClassNotFoundException e) {
+				throw new SQLException(e);
+			}
+			jdbcConnection = DriverManager.getConnection(
+					jdbcURL, jdbcUsername, jdbcPassword);
+			if (firstRequest){
+				firstRequest = false;
+				Statement statement = jdbcConnection.createStatement();
+				statement.addBatch("CREATE TABLE IF NOT EXISTS author_table (id INT(11) AUTO_INCREMENT PRIMARY KEY, author VARCHAR(100) not NULL);");
+				statement.addBatch("CREATE TABLE IF NOT EXISTS book (book_id INT(11) AUTO_INCREMENT PRIMARY KEY, title VARCHAR(100) not NULL, quantity INT(11) not NULL, author_id int(11), FOREIGN KEY (author_id) REFERENCES author_table (id));");
+				statement.executeBatch();
+				statement.close();
+			}
+		}
+	}
 
+	private void disconnect() throws SQLException {
+		if (jdbcConnection != null && !jdbcConnection.isClosed()) {
+			jdbcConnection.close();
+		}
+	}
+
+	private List<Book> getListFromResultSet(ResultSet resultSet) throws SQLException {
+		List<Book> listBook = new ArrayList<>();
+		while (resultSet.next()) {
+			int id = resultSet.getInt(1);
+			String title = resultSet.getString(2);
+			String author = resultSet.getString(3);
+			int quantity = resultSet.getInt(4);
+
+			Book book = new Book(id, title, author, quantity);
+			listBook.add(book);
+		}
+		return listBook;
+	}
+
+	private void deleteNotExistingAuthors() throws SQLException {
+		String sqlForDeleteRedundantAuthors = "DELETE FROM author_table WHERE id NOT IN (SELECT author_id FROM book)";
+		Statement statement = jdbcConnection.createStatement();
+		statement.execute(sqlForDeleteRedundantAuthors);
+		statement.close();
 	}
 
 	private int getAuthorId(String author) throws SQLException {
 		String getAuthorSql = "(SELECT * FROM author_table WHERE author = ?) LIMIT 1";
-
+		int authorId = -1;
 		PreparedStatement statement = jdbcConnection.prepareStatement(getAuthorSql);
 		statement.setString(1, author);
 		System.out.println(author);
 		ResultSet resultSet = statement.executeQuery();
-		resultSet.next();
-		int authorId = resultSet.getInt("id");
-		System.out.println(authorId);
+		if (resultSet.next()) {
+			authorId = resultSet.getInt("id");
+		}
 		statement.close();
 
 		return authorId;
@@ -229,14 +226,15 @@ public class DTO {
 		statement.executeUpdate();
 		statement.close();
 	}
-	private int getAuthorForDeletedBook(Book book) throws SQLException {
+	private int getAuthorAmountForDeletedBook(Book book) throws SQLException {
 		int id = -1;
 		String sql = "SELECT COUNT(book_id) FROM book WHERE author_id IN (SELECT id FROM author_table WHERE author = ?)";
 		PreparedStatement statement = jdbcConnection.prepareStatement(sql);
 		statement.setString(1, book.getAuthor());
 		ResultSet resultSet = statement.executeQuery();
-		resultSet.next();
-		id = resultSet.getInt(1);
+		if (resultSet.next()) {
+			id = resultSet.getInt(1);
+		}
 		statement.close();
 		return id;
 	}
